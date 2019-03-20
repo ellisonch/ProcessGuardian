@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcessGuardian", "ProcessGuardian\ProcessGuardian.csproj", "{C00231BA-9AB8-4131-9AB0-922C0DE0240C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {15216A9F-098E-4DD6-BD4B-76519BF4E7CD}
+	EndGlobalSection
+EndGlobal
