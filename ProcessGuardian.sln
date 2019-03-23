@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcessGuardian", "ProcessGuardian\ProcessGuardian.csproj", "{C00231BA-9AB8-4131-9AB0-922C0DE0240C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PgClientExample", "PgClientExample\PgClientExample.csproj", "{5C11DA15-3D51-412D-90E1-91C338AF839D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PgClientLibrary", "PgClientLibrary\PgClientLibrary.csproj", "{6A7AE821-A1B4-4B68-9062-18A7181F5383}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C00231BA-9AB8-4131-9AB0-922C0DE0240C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C11DA15-3D51-412D-90E1-91C338AF839D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C11DA15-3D51-412D-90E1-91C338AF839D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C11DA15-3D51-412D-90E1-91C338AF839D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C11DA15-3D51-412D-90E1-91C338AF839D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A7AE821-A1B4-4B68-9062-18A7181F5383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A7AE821-A1B4-4B68-9062-18A7181F5383}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A7AE821-A1B4-4B68-9062-18A7181F5383}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A7AE821-A1B4-4B68-9062-18A7181F5383}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
