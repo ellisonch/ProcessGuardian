@@ -8,11 +8,15 @@ using System.Threading.Tasks;
 namespace PgClientExample {
 	class Program {
 		static void Main(string[] args) {
-			var pg = new PgClientLibrary.PgClient();
+			DoThing().Wait();
+		}
 
-			while(true) {
+		private static async Task DoThing() {
+			var pg = PgClientLibrary.PgClient.Instance;
+
+			while (true) {
 				Console.Write("Running KeepAlive...");
-				pg.KeepAlive();
+				await pg.KeepAlive();
 				Console.Write("done.\n");
 
 				Console.Write("Sleeping for 1s...");

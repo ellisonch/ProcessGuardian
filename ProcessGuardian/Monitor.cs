@@ -11,57 +11,66 @@ using System.Threading.Tasks;
 namespace ProcessGuardian {
 	public class Monitor {
 		// private string _path = @"D:\paladins\DiscordBot\Application Files\DiscordBot_1_4_4_0[24]\DiscordBot.exe";
-		private string _path = @"../../../PgClientExample/bin/Debug/PgClientExample.exe";
+		private readonly string _path = @"../../../PgClientExample/bin/Debug/";
+		private readonly string _executableName = @"PgClientExample.exe";
+		private readonly string _pathAndFilename;
 
-		public async Task Watch() {
-			//var process = GetProcess(_path);
-			// process.WaitForExit();// Waits here for the process to exit.
-			await this.Server();
+		public Monitor() {
+			if (Path.GetFileName(_executableName) != _executableName) {
+				throw new Exception($"{_executableName} is invalid!");
+			}
+			_pathAndFilename = Path.Combine(_path, _executableName);
 		}
 
-		private async Task Server() {
-			var process = GetProcess(_path);
+		internal async Task Start() {
+			Console.WriteLine("Monitor starting up...");
+			while (true) {
+				await RunOnce();
+				Console.WriteLine("RunOnce() terminated... starting up again...");
+			}
+		}
+		internal async Task RunOnce() {
+			KillProcess();
 
-			using (AnonymousPipeServerStream pipeServer = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable)) {
-				Console.WriteLine("[SERVER] Current TransmissionMode: {0}.", pipeServer.TransmissionMode);
-
-				// Pass the client process a handle to the server.
+			// var process = GetProcess(_pathAndFilename);
+			using (var process = GetProcess(_pathAndFilename))
+			using (var pipeServer = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable)) {
 				process.StartInfo.Environment.Add(PgClientLib.EnvironmentKeyName, pipeServer.GetClientHandleAsString());
 				process.StartInfo.UseShellExecute = false;
-				process.Start();
 
+				process.Start();
+				// The DisposeLocalCopyOfClientHandle method should be called after the client handle has been passed to the client. If this method is not called, the AnonymousPipeServerStream object will not receive notice when the client disposes of its PipeStream object.
 				pipeServer.DisposeLocalCopyOfClientHandle();
 
-				try {
-					while (true) {
-						var buffer = new byte[sizeof(long)];
-						await pipeServer.ReadAsync(buffer, 0, sizeof(long));
-						var nowLong = BitConverter.ToInt64(buffer, 0);
-						var now = DateTime.FromBinary(nowLong);
-						Console.WriteLine($"Read dt of {now}");
-					}
-					// Read user input and send that to the client process.
-					//using (StreamReader sw = new StreamReader(pipeServer)) {
-						// var msg = await sw.ReadLineAsync();
-						// Console.WriteLine($"Read {msg}");
-						//sw.AutoFlush = true;
-						// Send a 'sync message' and wait for client to receive it.
-						//sw.WriteLine("SYNC");
-						//pipeServer.WaitForPipeDrain();
-						// Send the console input to the client process.
-						//Console.Write("[SERVER] Enter text: ");
-						//sw.WriteLine(Console.ReadLine());
-					//}
-				}
-				// Catch the IOException that is raised if the pipe is broken or disconnected.
-				catch (IOException e) {
-					Console.WriteLine("[SERVER] Error: {0}", e.Message);
-				}
+				await InnerLoop(pipeServer);
 			}
+		}
 
-			process.WaitForExit();
-			process.Close();
-			Console.WriteLine("[SERVER] Client quit. Server terminating.");
+		private static async Task InnerLoop(AnonymousPipeServerStream pipeServer) {
+			while (true) {
+				var now = await ReadDateTime(pipeServer);
+				Console.WriteLine($"Read dt of {now}");
+			}
+		}
+
+		private static async Task<DateTime> ReadDateTime(AnonymousPipeServerStream pipeServer) {
+			var buffer = new byte[sizeof(long)];
+			await pipeServer.ReadAsync(buffer, 0, sizeof(long));
+			var nowLong = BitConverter.ToInt64(buffer, 0);
+			var now = DateTime.FromBinary(nowLong);
+			return now;
+		}
+
+		private void KillProcess() {
+			Process[] processes = Process.GetProcessesByName(_executableName);
+			foreach (var proc in processes) {
+				Console.WriteLine($"Killing {proc}...");
+				proc.Kill();
+			}
+			processes = Process.GetProcessesByName(_executableName);
+			if (processes.Length > 0) {
+				throw new Exception("Couldn't kill process");
+			}
 		}
 
 		private static Process GetProcess(string path) {
