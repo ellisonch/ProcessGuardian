@@ -30,7 +30,7 @@ namespace PgClientLibrary {
 		public async Task KeepAlive() {
 			using (var cts = new CancellationTokenSource(_cancellationTime)) {
 				try {
-					await WriteDateTime(DateTime.Now, cts.Token);
+					await WriteDateTime(DateTime.Now, cts.Token).ConfigureAwait(false);
 				} catch (OperationCanceledException) { }
 			}
 		}
@@ -40,9 +40,9 @@ namespace PgClientLibrary {
 			var bArray = BitConverter.GetBytes(dtLong);
 
 			// await Task.Delay(30, token);
-			await _semaphoreSlim.WaitAsync(token);
+			await _semaphoreSlim.WaitAsync(token).ConfigureAwait(false);
 			try {
-				await _pipeClient.WriteAsync(bArray, 0, bArray.Length, token);
+				await _pipeClient.WriteAsync(bArray, 0, bArray.Length, token).ConfigureAwait(false);
 			} finally {
 				_semaphoreSlim.Release();
 			}

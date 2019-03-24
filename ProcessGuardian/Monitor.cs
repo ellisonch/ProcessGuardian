@@ -25,7 +25,7 @@ namespace ProcessGuardian {
 		internal async Task Start() {
 			Console.WriteLine("Monitor starting up...");
 			while (true) {
-				await RunOnce();
+				await RunOnce().ConfigureAwait(false);
 				Console.WriteLine("RunOnce() terminated... starting up again...");
 			}
 		}
@@ -42,20 +42,20 @@ namespace ProcessGuardian {
 				// The DisposeLocalCopyOfClientHandle method should be called after the client handle has been passed to the client. If this method is not called, the AnonymousPipeServerStream object will not receive notice when the client disposes of its PipeStream object.
 				pipeServer.DisposeLocalCopyOfClientHandle();
 
-				await InnerLoop(pipeServer);
+				await InnerLoop(pipeServer).ConfigureAwait(false);
 			}
 		}
 
 		private static async Task InnerLoop(AnonymousPipeServerStream pipeServer) {
 			while (true) {
-				var now = await ReadDateTime(pipeServer);
+				var now = await ReadDateTime(pipeServer).ConfigureAwait(false);
 				Console.WriteLine($"Read dt of {now}");
 			}
 		}
 
 		private static async Task<DateTime> ReadDateTime(AnonymousPipeServerStream pipeServer) {
 			var buffer = new byte[sizeof(long)];
-			await pipeServer.ReadAsync(buffer, 0, sizeof(long));
+			await pipeServer.ReadAsync(buffer, 0, sizeof(long)).ConfigureAwait(false);
 			var nowLong = BitConverter.ToInt64(buffer, 0);
 			var now = DateTime.FromBinary(nowLong);
 			return now;
