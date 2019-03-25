@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -13,8 +14,10 @@ namespace PgClientLibrary {
 		public static PgClient Instance { get { return _instance; } }
 
 		private readonly AnonymousPipeClientStream _pipeClient;
-		private static SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
-		private static TimeSpan _cancellationTime = TimeSpan.FromMilliseconds(10);
+		private static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+		private readonly TimeSpan _cancellationTime = TimeSpan.FromMilliseconds(10);
+
+		// private static Process _process = Process.GetCurrentProcess();
 
 		static PgClient() { }
 
@@ -27,11 +30,17 @@ namespace PgClientLibrary {
 			_pipeClient = new AnonymousPipeClientStream(PipeDirection.Out, pipeHandle);
 		}
 
-		public async Task KeepAlive() {
-			using (var cts = new CancellationTokenSource(_cancellationTime)) {
+		public async Task KeepAlive(Action<string> log) {
+			try {
+				using (var cts = new CancellationTokenSource(_cancellationTime)) {
+					try {
+						await WriteDateTime(DateTime.Now, cts.Token).ConfigureAwait(false);
+					} catch (OperationCanceledException) { }
+				}
+			} catch (Exception e) {
 				try {
-					await WriteDateTime(DateTime.Now, cts.Token).ConfigureAwait(false);
-				} catch (OperationCanceledException) { }
+					log($"PgClient: {e.Message}");
+				} catch { }
 			}
 		}
 
@@ -42,6 +51,7 @@ namespace PgClientLibrary {
 			// await Task.Delay(30, token);
 			await _semaphoreSlim.WaitAsync(token).ConfigureAwait(false);
 			try {
+				// Console.WriteLine($"PgClient [{_process.Id}]: Sent");
 				await _pipeClient.WriteAsync(bArray, 0, bArray.Length, token).ConfigureAwait(false);
 			} finally {
 				_semaphoreSlim.Release();
