@@ -1,0 +1,9 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<guardianSettings>
+	<add key="path" value="D:\paladins\DiscordBot\Application Files\DiscordBot_1_4_5_0[24]" />
+	<add key="executable" value="DiscordBot" />
+	<add key="extension" value=".exe" />
+	<add key="maxTimeWithoutRefresh" value="00:00:30" />
+	<add key="timeToShutdownProcess" value="00:00:05" />
+	<add key="timeBetweenRestart" value="00:00:30" />
+</guardianSettings>

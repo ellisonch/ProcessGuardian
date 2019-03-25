@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Configuration;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Specialized;
 
 namespace ProcessGuardian {
 	public class Monitor {
@@ -19,18 +21,39 @@ namespace ProcessGuardian {
 		private readonly string _fullFilename;
 		private readonly string _pathAndFilename;
 		private readonly TimeSpan _timeBeforeRestart = TimeSpan.FromSeconds(5);
-		private readonly TimeSpan _refreshTime = TimeSpan.FromSeconds(1);
-		private readonly TimeSpan _killDelay = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _pollResolution = TimeSpan.FromSeconds(1);
+		private readonly TimeSpan _waitTimeOnKill = TimeSpan.FromSeconds(5);
 		private readonly TimeSpan _restartDelay = TimeSpan.FromSeconds(5);
 
 		private DateTime _lastSeen = DateTime.MinValue;
 
 		public Monitor() {
+			ReadAllSettings();
+
 			_fullFilename = _executableName + _extension;
 			if (Path.GetFileName(_fullFilename) != _fullFilename) {
 				throw new Exception($"{_fullFilename} is invalid!");
 			}
 			_pathAndFilename = Path.Combine(_path, _fullFilename);
+		}
+
+		// https://docs.microsoft.com/en-us/dotnet/api/system.configuration.configurationmanager?redirectedfrom=MSDN&view=netframework-4.7.2
+		static void ReadAllSettings() {
+			try {
+				// var appSettings = ConfigurationManager.AppSettings;
+				var settings = (NameValueCollection)ConfigurationManager.GetSection("guardianSettings");
+
+				if (settings.Count == 0) {
+					Console.WriteLine("AppSettings is empty.");
+				} else {
+					foreach (var key in settings.AllKeys) {
+						var value = settings[key];
+						Console.WriteLine("Key: {0} Value: {1}", key, value);
+					}
+				}
+			} catch (ConfigurationErrorsException) {
+				Console.WriteLine("Error reading app settings");
+			}
 		}
 
 		internal async Task Start() {
@@ -81,7 +104,7 @@ namespace ProcessGuardian {
 					Log($"{id}: Refreshed fast enough ({latency.TotalMilliseconds}ms)");
 				}
 
-				var taskResult = await TimeoutAfter(readTask, _refreshTime);
+				var taskResult = await TimeoutAfter(readTask, _pollResolution);
 				if (taskResult.HasValue) {
 					// if the task completed, handle the result and create a new task
 					var now = taskResult.Value;
@@ -128,7 +151,7 @@ namespace ProcessGuardian {
 			foreach (var proc in processes) {
 				Log($"Killing {proc}...");
 				proc.Kill();
-				if (!proc.WaitForExit((int)_killDelay.TotalMilliseconds)) {
+				if (!proc.WaitForExit((int)_waitTimeOnKill.TotalMilliseconds)) {
 					throw new Exception("Couldn't kill process");
 				}
 			}
