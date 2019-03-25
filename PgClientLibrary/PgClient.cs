@@ -13,6 +13,8 @@ namespace PgClientLibrary {
 		private static readonly PgClient _instance = new PgClient();
 		public static PgClient Instance { get { return _instance; } }
 
+		public Exception StartupException { get; private set; }
+
 		private readonly AnonymousPipeClientStream _pipeClient;
 		private static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 		private readonly TimeSpan _cancellationTime = TimeSpan.FromMilliseconds(10);
@@ -22,15 +24,23 @@ namespace PgClientLibrary {
 		static PgClient() { }
 
 		private PgClient() {
-			var pipeHandle = Environment.GetEnvironmentVariable(PgClientLib.EnvironmentKeyName);
-			if (pipeHandle == null) {
-				throw new Exception($"Environment variable {PgClientLib.EnvironmentKeyName} containing pipe handle not set");
-			}
+			try {
+				var pipeHandle = Environment.GetEnvironmentVariable(PgClientLib.EnvironmentKeyName);
+				if (pipeHandle == null) {
+					throw new Exception($"Environment variable {PgClientLib.EnvironmentKeyName} containing pipe handle not set");
+				}
 
-			_pipeClient = new AnonymousPipeClientStream(PipeDirection.Out, pipeHandle);
+				_pipeClient = new AnonymousPipeClientStream(PipeDirection.Out, pipeHandle);
+				StartupException = null;
+			} catch (Exception e) {
+				StartupException = e;
+			}
 		}
 
 		public async Task KeepAlive(Action<string> log) {
+			if (StartupException != null) {
+				return;
+			}
 			try {
 				using (var cts = new CancellationTokenSource(_cancellationTime)) {
 					try {

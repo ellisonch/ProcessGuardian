@@ -3,7 +3,7 @@
 	<add key="path" value="D:\paladins\DiscordBot\Application Files\DiscordBot_1_4_5_0[24]" />
 	<add key="executable" value="DiscordBot" />
 	<add key="extension" value=".exe" />
-	<add key="maxTimeWithoutRefresh" value="00:00:30" />
+	<add key="maxTimeWithoutRefresh" value="00:01:20" />
 	<add key="timeToShutdownProcess" value="00:00:05" />
 	<add key="timeBetweenRestart" value="00:00:30" />
 </guardianSettings>

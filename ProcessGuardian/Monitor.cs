@@ -73,7 +73,11 @@ namespace ProcessGuardian {
 			var id = 0;
 			while (true) {
 				id++;
-				await RunOnce(id).ConfigureAwait(false);
+				try {
+					await RunOnce(id).ConfigureAwait(false);
+				} catch (Exception e) {
+					Log($"{id}: {e}");
+				}
 				Log($"{id}: RunOnce() terminated, waiting {_restartDelay}...");
 				await Task.Delay(_restartDelay).ConfigureAwait(false);
 				Log($"{id}: Starting up again...");
@@ -113,7 +117,7 @@ namespace ProcessGuardian {
 					Log($"{id}: Need to restart, not seen fast enough ({latency.TotalMilliseconds}ms)");
 					return;
 				} else {
-					Log($"{id}: Refreshed fast enough ({latency.TotalMilliseconds}ms)");
+					// Log($"{id}: Refreshed fast enough ({latency.TotalMilliseconds}ms)");
 				}
 
 				var taskResult = await TimeoutAfter(readTask, _pollResolution);
@@ -139,6 +143,8 @@ namespace ProcessGuardian {
 					timeoutCancellationTokenSource.Cancel();
 					if (task.Status == TaskStatus.RanToCompletion) {
 						return task.Result;
+					} else if (task.Status == TaskStatus.Faulted) {
+						throw task.Exception;
 					}
 					return null;
 					// return await task;  // Very important in order to propagate exceptions
@@ -152,7 +158,10 @@ namespace ProcessGuardian {
 
 		private static async Task<DateTime> ReadDateTime(AnonymousPipeServerStream pipeServer) {
 			var buffer = new byte[sizeof(long)];
-			await pipeServer.ReadAsync(buffer, 0, sizeof(long)).ConfigureAwait(false); // readasync ignores tokens :(
+			var numbytes = await pipeServer.ReadAsync(buffer, 0, sizeof(long)).ConfigureAwait(false); // readasync ignores tokens :(
+			if (numbytes < sizeof(long)) {
+				throw new Exception("less than sizeof(long) bytes read");
+			}
 			var nowLong = BitConverter.ToInt64(buffer, 0);
 			var now = DateTime.FromBinary(nowLong);
 			return now;
