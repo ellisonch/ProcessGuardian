@@ -14,47 +14,59 @@ using System.Collections.Specialized;
 namespace ProcessGuardian {
 	public class Monitor {
 		// private string _path = @"D:\paladins\DiscordBot\Application Files\DiscordBot_1_4_4_0[24]\DiscordBot.exe";
-		private readonly string _path = @"../../../PgClientExample/bin/Debug/";
-		private readonly string _executableName = @"PgClientExample";
-		private readonly string _extension = ".exe";
+		private readonly string _path; //= @"../../../PgClientExample/bin/Debug/";
+		private readonly string _executableName; //= @"PgClientExample";
+		private readonly string _extension; // = ".exe";
 
 		private readonly string _fullFilename;
 		private readonly string _pathAndFilename;
-		private readonly TimeSpan _timeBeforeRestart = TimeSpan.FromSeconds(5);
 		private readonly TimeSpan _pollResolution = TimeSpan.FromSeconds(1);
-		private readonly TimeSpan _waitTimeOnKill = TimeSpan.FromSeconds(5);
-		private readonly TimeSpan _restartDelay = TimeSpan.FromSeconds(5);
+
+		private readonly TimeSpan _timeBeforeRestart; // = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _waitTimeOnKill; // = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _restartDelay; // = TimeSpan.FromSeconds(5);
 
 		private DateTime _lastSeen = DateTime.MinValue;
 
 		public Monitor() {
-			ReadAllSettings();
+			var settings = (NameValueCollection)ConfigurationManager.GetSection("guardianSettings");
+			_path = settings["path"];
+			_executableName = settings["executable"];
+			_extension = settings["extension"];
+
+			_timeBeforeRestart = TimeSpan.Parse(settings["maxTimeWithoutRefresh"]);
+			_waitTimeOnKill = TimeSpan.Parse(settings["timeToShutdownProcess"]);
+			_restartDelay = TimeSpan.Parse(settings["timeBetweenRestart"]);
+
 
 			_fullFilename = _executableName + _extension;
 			if (Path.GetFileName(_fullFilename) != _fullFilename) {
 				throw new Exception($"{_fullFilename} is invalid!");
 			}
 			_pathAndFilename = Path.Combine(_path, _fullFilename);
+
+
+			Log($"Executing {_pathAndFilename} with settings {_timeBeforeRestart}, {_waitTimeOnKill}, and {_restartDelay}");
 		}
 
 		// https://docs.microsoft.com/en-us/dotnet/api/system.configuration.configurationmanager?redirectedfrom=MSDN&view=netframework-4.7.2
-		static void ReadAllSettings() {
-			try {
-				// var appSettings = ConfigurationManager.AppSettings;
-				var settings = (NameValueCollection)ConfigurationManager.GetSection("guardianSettings");
+		//static void ReadAllSettings() {
+		//	try {
+		//		// var appSettings = ConfigurationManager.AppSettings;
+		//		var settings = (NameValueCollection)ConfigurationManager.GetSection("guardianSettings");
 
-				if (settings.Count == 0) {
-					Console.WriteLine("AppSettings is empty.");
-				} else {
-					foreach (var key in settings.AllKeys) {
-						var value = settings[key];
-						Console.WriteLine("Key: {0} Value: {1}", key, value);
-					}
-				}
-			} catch (ConfigurationErrorsException) {
-				Console.WriteLine("Error reading app settings");
-			}
-		}
+		//		if (settings.Count == 0) {
+		//			Console.WriteLine("AppSettings is empty.");
+		//		} else {
+		//			foreach (var key in settings.AllKeys) {
+		//				var value = settings[key];
+		//				Console.WriteLine("Key: {0} Value: {1}", key, value);
+		//			}
+		//		}
+		//	} catch (ConfigurationErrorsException) {
+		//		Console.WriteLine("Error reading app settings");
+		//	}
+		//}
 
 		internal async Task Start() {
 			Log("Monitor starting up...");
