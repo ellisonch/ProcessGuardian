@@ -24,8 +24,10 @@ namespace ProcessGuardian {
 
 		private readonly TimeSpan _timeBeforeRestart; // = TimeSpan.FromSeconds(5);
 		private readonly TimeSpan _waitTimeOnKill; // = TimeSpan.FromSeconds(5);
-		private readonly TimeSpan _restartDelay; // = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _maxRestartDelay; // = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _minRestartDelay = TimeSpan.FromSeconds(5);
 
+		private TimeSpan _currentRestartDelay;
 		private DateTime _lastSeen = DateTime.MinValue;
 
 		public Monitor() {
@@ -36,8 +38,7 @@ namespace ProcessGuardian {
 
 			_timeBeforeRestart = TimeSpan.Parse(settings["maxTimeWithoutRefresh"]);
 			_waitTimeOnKill = TimeSpan.Parse(settings["timeToShutdownProcess"]);
-			_restartDelay = TimeSpan.Parse(settings["timeBetweenRestart"]);
-
+			_maxRestartDelay = TimeSpan.Parse(settings["timeBetweenRestart"]);
 
 			_fullFilename = _executableName + _extension;
 			if (Path.GetFileName(_fullFilename) != _fullFilename) {
@@ -46,40 +47,23 @@ namespace ProcessGuardian {
 			_pathAndFilename = Path.Combine(_path, _fullFilename);
 
 
-			Log($"Executing {_pathAndFilename} with settings {_timeBeforeRestart}, {_waitTimeOnKill}, and {_restartDelay}");
+			Log($"Executing {_pathAndFilename} with settings {_timeBeforeRestart}, {_waitTimeOnKill}, and {_maxRestartDelay}");
 		}
-
-		// https://docs.microsoft.com/en-us/dotnet/api/system.configuration.configurationmanager?redirectedfrom=MSDN&view=netframework-4.7.2
-		//static void ReadAllSettings() {
-		//	try {
-		//		// var appSettings = ConfigurationManager.AppSettings;
-		//		var settings = (NameValueCollection)ConfigurationManager.GetSection("guardianSettings");
-
-		//		if (settings.Count == 0) {
-		//			Console.WriteLine("AppSettings is empty.");
-		//		} else {
-		//			foreach (var key in settings.AllKeys) {
-		//				var value = settings[key];
-		//				Console.WriteLine("Key: {0} Value: {1}", key, value);
-		//			}
-		//		}
-		//	} catch (ConfigurationErrorsException) {
-		//		Console.WriteLine("Error reading app settings");
-		//	}
-		//}
-
+		
 		internal async Task Start() {
 			Log("Monitor starting up...");
 			var id = 0;
 			while (true) {
+				_currentRestartDelay = _maxRestartDelay;
+
 				id++;
 				try {
 					await RunOnce(id).ConfigureAwait(false);
 				} catch (Exception e) {
 					Log($"{id}: {e}");
 				}
-				Log($"{id}: RunOnce() terminated, waiting {_restartDelay}...");
-				await Task.Delay(_restartDelay).ConfigureAwait(false);
+				Log($"{id}: RunOnce() terminated, waiting {_currentRestartDelay}...");
+				await Task.Delay(_currentRestartDelay).ConfigureAwait(false);
 				Log($"{id}: Starting up again...");
 			}
 		}
@@ -126,7 +110,13 @@ namespace ProcessGuardian {
 					var now = taskResult.Value;
 					_lastSeen = now;
 					readTask = ReadDateTime(pipeServer);
-					Log($"{id}: Read dt of {now}");
+
+					var newCurrent = _currentRestartDelay.Subtract(new TimeSpan(_pollResolution.Ticks / 2));
+					if (newCurrent >= _minRestartDelay) {
+						_currentRestartDelay = newCurrent;
+					}
+
+					Log($"{id}: Read dt of {now}; restart delay is {_currentRestartDelay}");
 				}
 			}
 		}
