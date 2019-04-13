@@ -104,6 +104,7 @@ namespace ProcessGuardian {
 					// Log($"{id}: Refreshed fast enough ({latency.TotalMilliseconds}ms)");
 				}
 
+				var sw = Stopwatch.StartNew();
 				var taskResult = await TimeoutAfter(readTask, _pollResolution);
 				if (taskResult.HasValue) {
 					// if the task completed, handle the result and create a new task
@@ -111,12 +112,12 @@ namespace ProcessGuardian {
 					_lastSeen = now;
 					readTask = ReadDateTime(pipeServer);
 
-					var newCurrent = _currentRestartDelay.Subtract(new TimeSpan(_pollResolution.Ticks / 2));
-					if (newCurrent >= _minRestartDelay) {
-						_currentRestartDelay = newCurrent;
-					}
-
 					Log($"{id}: Read dt of {now}; restart delay is {_currentRestartDelay}");
+				}
+
+				var newCurrent = _currentRestartDelay.Subtract(new TimeSpan(sw.ElapsedTicks / 4));
+				if (newCurrent >= _minRestartDelay) {
+					_currentRestartDelay = newCurrent;
 				}
 			}
 		}
