@@ -13,18 +13,17 @@ using System.Collections.Specialized;
 
 namespace ProcessGuardian {
 	public class Monitor {
-		// private string _path = @"D:\paladins\DiscordBot\Application Files\DiscordBot_1_4_4_0[24]\DiscordBot.exe";
-		private readonly string _path; //= @"../../../PgClientExample/bin/Debug/";
-		private readonly string _executableName; //= @"PgClientExample";
-		private readonly string _extension; // = ".exe";
+		private readonly string _path;
+		private readonly string _executableName;
+		private readonly string _extension;
 
 		private readonly string _fullFilename;
 		private readonly string _pathAndFilename;
 		private readonly TimeSpan _pollResolution = TimeSpan.FromSeconds(1);
 
-		private readonly TimeSpan _timeBeforeRestart; // = TimeSpan.FromSeconds(5);
-		private readonly TimeSpan _waitTimeOnKill; // = TimeSpan.FromSeconds(5);
-		private readonly TimeSpan _maxRestartDelay; // = TimeSpan.FromSeconds(5);
+		private readonly TimeSpan _timeBeforeRestart;
+		private readonly TimeSpan _waitTimeOnKill;
+		private readonly TimeSpan _maxRestartDelay;
 		private readonly TimeSpan _minRestartDelay = TimeSpan.FromSeconds(5);
 
 		private TimeSpan _currentRestartDelay;
@@ -68,12 +67,8 @@ namespace ProcessGuardian {
 			}
 		}
 		internal async Task RunOnce(int id) {
-			//GC.Collect();
-			//GC.WaitForPendingFinalizers();
-			//GC.Collect();
 			KillProcess();
 
-			// var process = GetProcess(_pathAndFilename);
 			using (var process = GetProcess(_pathAndFilename))
 			using (var pipeServer = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable)) {
 				process.StartInfo.Environment.Add(PgClientLib.EnvironmentKeyName, pipeServer.GetClientHandleAsString());
